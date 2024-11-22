@@ -16,8 +16,11 @@ import { Button } from "@/components/ui/button";
 
 interface CartItem {
   id: number;
-  name: string;
-  price: number;
+  medicineId: number;
+  medicine: {
+    name: string;
+    price: number;
+  };
   quantity: number;
 }
 
@@ -27,19 +30,31 @@ export default function CheckoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const cartItems: CartItem[] = JSON.parse(
-      localStorage.getItem("cart") || "[]"
-    );
-    setCart(cartItems);
+    const fetchCart = async () => {
+      const response = await fetch("/api/cart");
+      const data = await response.json();
+      setCart(data);
+    };
+
+    fetchCart();
   }, []);
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = cart.reduce(
+    (sum, item) => sum + item.medicine.price * item.quantity,
+    0
+  );
 
-  const handleCheckout = () => {
-    // In a real application, you would process the payment here
-    alert(`Checkout completed with ${paymentMethod} payment method`);
-    localStorage.removeItem("cart");
-    router.push("/");
+  const handleCheckout = async () => {
+    // Clear the cart in the database
+    await fetch("/api/cart", {
+      method: "DELETE",
+    });
+
+    // Trigger cart update event
+    window.dispatchEvent(new Event("cartUpdated"));
+
+    // Redirect to the done page
+    router.push("/done");
   };
 
   return (
@@ -54,9 +69,11 @@ export default function CheckoutPage() {
             {cart.map((item) => (
               <div key={item.id} className="flex justify-between items-center">
                 <span>
-                  {item.name} x {item.quantity}
+                  {item.medicine.name} x {item.quantity}
                 </span>
-                <span>PHP {(item.price * item.quantity).toFixed(2)}</span>
+                <span>
+                  PHP {(item.medicine.price * item.quantity).toFixed(2)}
+                </span>
               </div>
             ))}
             <div className="flex justify-between items-center font-bold text-lg">
