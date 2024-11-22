@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./database.db"
+}
+
+model Medicine {
+  id                 Int        @id @default(autoincrement())
+  name               String
+  description        String
+  image              String
+  price              Float
+  stock              Int
+  dosage             String
+  sideEffects        String
+  manufactureDate    DateTime
+  earliestExpiryDate DateTime
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  cartItems          CartItem[]
+}
+
+model CartItem {
+  id         Int      @id @default(autoincrement())
+  medicineId Int
+  medicine   Medicine @relation(fields: [medicineId], references: [id])
+  quantity   Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
