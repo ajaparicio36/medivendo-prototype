@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   id: number;
@@ -29,6 +30,7 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [typingContent, setTypingContent] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -42,17 +44,29 @@ export default function ChatPage() {
     }
   };
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, typingContent]);
+
+  const simulateTyping = async (content: string) => {
+    for (let i = 0; i <= content.length; i++) {
+      setTypingContent(content.slice(0, i));
+      await new Promise((resolve) => setTimeout(resolve, 20)); // Adjust typing speed here
+    }
+    return content;
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === "" || isLoading) return;
+    if (!newMessage.trim()) return;
 
     const userMessage: Message = {
       id: messages.length + 1,
       sender: "user",
-      content: newMessage,
+      content: newMessage.trim(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
     setNewMessage("");
     setIsLoading(true);
     setError(null);
@@ -63,55 +77,42 @@ export default function ChatPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: "user",
-              content: newMessage,
-            },
-          ],
-        }),
+        body: JSON.stringify({ userMessage: userMessage.content }),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to get response");
+        throw new Error("Failed to get response from MediBot");
       }
 
-      const completion = await response.json();
+      const data = await response.json();
+      const typedContent = await simulateTyping(data.reply);
 
-      const responseMessage: Message = {
+      const botMessage: Message = {
         id: messages.length + 2,
         sender: "MediBot",
-        content:
-          completion.choices[0].message.content ||
-          "Sorry, I couldn't generate a response.",
+        content: typedContent,
       };
 
-      setMessages((prev) => [...prev, responseMessage]);
-      setTimeout(scrollToBottom, 100);
-    } catch (error: any) {
-      console.error("API Error:", error);
-      setError(
-        error.message === "Too many requests. Please try again later."
-          ? "Please wait a moment before sending another message."
-          : "Sorry, there was an error processing your message. Please try again."
-      );
+      setMessages((prevMessages) => [...prevMessages, botMessage]);
+      setTypingContent("");
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white p-4">
-      <Card className="w-full max-w-2xl">
+    <div className="flex items-center justify-center min-h-screen bg-white p-6">
+      <Card className="w-full max-w-4xl">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center text-black">
             Chat with MediBot
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[500px] pr-4" ref={scrollAreaRef}>
+          <ScrollArea className="h-[600px] pr-4" ref={scrollAreaRef}>
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -135,7 +136,7 @@ export default function ChatPage() {
                       : "bg-[#dedcff] text-black"
                   }`}
                 >
-                  {message.content}
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
                 </div>
                 {message.sender === "user" && (
                   <Avatar>
@@ -158,7 +159,7 @@ export default function ChatPage() {
                   <AvatarFallback>MB</AvatarFallback>
                 </Avatar>
                 <div className="p-3 rounded-lg bg-[#dedcff] text-black">
-                  Typing...
+                  <ReactMarkdown>{typingContent}</ReactMarkdown>
                 </div>
               </div>
             )}

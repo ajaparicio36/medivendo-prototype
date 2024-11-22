@@ -1,70 +1,51 @@
-// app/api/chat/route.ts
 import { OpenAI } from "openai";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Use server-side environment variable
+const baseURL = "https://api.together.xyz/v1";
+const apiKey = `${process.env.OPENAI_API_KEY}`;
+const systemPrompt = `
+  You are a pharmaceutical physician providing medical advice. When responding:
+  
+  1. Use Markdown formatting for readability
+  2. Whatever things I ask about health and symptoms, please provide the best possible suggestions and the medicines I can take to help relieve the problems.
+  
+  Format your response using:
+  - **Bold text** for section headers
+  - *Italic text* for important notes
+  - Bullet points for lists
+  - Clear, concise language
+  `;
+const api = new OpenAI({
+  apiKey,
+  baseURL,
 });
 
-// Simple in-memory rate limiting
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 5;
-const requestLog = new Map<string, number[]>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const userRequests = requestLog.get(ip) || [];
-
-  // Clean old requests
-  const recentRequests = userRequests.filter(
-    (time) => time > now - RATE_LIMIT_WINDOW
-  );
-  requestLog.set(ip, recentRequests);
-
-  return recentRequests.length >= MAX_REQUESTS_PER_WINDOW;
-}
-
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    // Get IP for rate limiting
-    const forwarded = request.headers.get("x-forwarded-for");
-    const ip = forwarded ? forwarded.split(",")[0] : "unknown";
+    const { userMessage } = await request.json();
 
-    if (isRateLimited(ip)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        { status: 429 }
-      );
-    }
-
-    const { messages } = await request.json();
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+    const chatCompletion = await api.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
       messages: [
-        {
-          role: "system",
-          content:
-            "You are MediBot, a helpful medical assistant. Provide brief, clear responses.",
-        },
-        ...messages,
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
       ],
       max_tokens: 150,
-      temperature: 0.7,
     });
 
-    // Log the request
-    const userRequests = requestLog.get(ip) || [];
-    userRequests.push(Date.now());
-    requestLog.set(ip, userRequests);
+    console.log(chatCompletion);
+    const reply = chatCompletion.choices[0].message.content;
 
-    console.log(completion);
-    return NextResponse.json(completion);
-  } catch (error: any) {
-    console.error("[CHAT ERROR]", error);
+    // Ensure the reply is a string and preserve new lines
+    const formattedReply =
+      typeof reply === "string" ? reply.replace(/\n/g, "\n") : "";
+
+    return NextResponse.json({ reply: formattedReply }, { status: 200 });
+  } catch (error) {
+    console.error("Error in chat API:", error);
     return NextResponse.json(
-      { error: error?.message || "Internal server error" },
-      { status: error?.status || 500 }
+      { error: "An error occurred while processing your request" },
+      { status: 500 }
     );
   }
 }
