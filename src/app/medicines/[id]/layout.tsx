@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CartPopover } from "@/components/CartPopover";
+import Image from "next/image";
 
 interface CartItem {
   id: number;
@@ -52,8 +53,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <nav className="border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-xl font-semibold text-black">
-              MediShop
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/logo.png"
+                alt="MediVendo Logo"
+                width={150}
+                height={40}
+                priority
+              />
             </Link>
             <CartPopover
               cart={cart}

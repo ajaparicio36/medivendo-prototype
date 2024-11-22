@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -12,7 +13,17 @@ export default function Home() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <Card className="w-[450px]">
-        <CardHeader className="space-y-2">
+        <CardHeader className="space-y-4">
+          <div className="flex justify-center">
+            <Image
+              src="/logo.png"
+              alt="MediVendo Logo"
+              width={300}
+              height={100}
+              priority
+              className="mb-4"
+            />
+          </div>
           <CardTitle className="text-black text-center text-3xl">
             Welcome
           </CardTitle>
@@ -20,6 +31,7 @@ export default function Home() {
             Choose an option to proceed
           </CardDescription>
         </CardHeader>
+
         <CardContent className="flex flex-col space-y-6 p-6">
           <Link href="/chat" passHref>
             <Button className="w-full bg-[#2f27ce] hover:bg-[#2f27ce]/90 text-lg py-6">
