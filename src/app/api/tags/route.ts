@@ -6,15 +6,16 @@ const apiKey = `${process.env.OPENAI_API_KEY}`;
 const systemPrompt = `
   You are a pharmaceutical physician providing medical advice. When responding:
   
-  1. Use Markdown formatting for readability
-  2. Whatever things I ask about health and symptoms, please provide the best possible suggestions and the medicines I can take to help relieve the problems.
-  3. I might ask in Hiligaynon, so please provide a response in Hiligaynon.
+  1. You will respond in json_objects
+  2. The user will give symptoms and you will provide keywords for the medicine he might take.
+  3. You will label the keywords as "tags" in the json object.
+  4. Give a message as well with advice text.
+  5. Only suggest common over-the-counter medicines.
   
-  Format your response using:
-  - **Bold text** for important information such as medicine names
-  - Bullet points for lists
-  - Clear, concise language
-  `;
+  Example:
+  User: I have a headache
+  You: {"tags": ["aspirin", "paracetamol"], "message": "You might take aspirin or paracetamol for your headache."}`;
+
 const api = new OpenAI({
   apiKey,
   baseURL,
@@ -31,15 +32,20 @@ export async function POST(request: NextRequest) {
         { role: "user", content: userMessage },
       ],
       max_tokens: 150,
+      response_format: { type: "json_object" },
     });
 
-    console.log(chatCompletion);
-    const reply = chatCompletion.choices[0].message.content;
+    if (!chatCompletion.choices[0].message.content) {
+      return NextResponse.json(
+        { error: "An error occurred while processing your request" },
+        { status: 500 }
+      );
+    }
 
-    const formattedReply =
-      typeof reply === "string" ? reply.replace(/\n/g, "\n") : "";
+    const reply = await JSON.parse(chatCompletion.choices[0].message.content);
+    console.log(reply);
 
-    return NextResponse.json({ reply: formattedReply }, { status: 200 });
+    return NextResponse.json({ reply }, { status: 200 });
   } catch (error) {
     console.error("Error in chat API:", error);
     return NextResponse.json(

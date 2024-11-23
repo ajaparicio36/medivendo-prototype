@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { MedicineCard } from "@/components/MedicineCard";
 import { Medicine } from "@prisma/client";
+import { SearchBar } from "@/components/SearchBar";
 import Loading from "@/components/Loading";
 
 export default function Catalogue() {
@@ -10,15 +11,28 @@ export default function Catalogue() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchMedicines = async () => {
-      const response = await fetch("/api/medicines");
-      const data = await response.json();
-      setMedicines(data);
-      setIsLoading(false);
+    const fetchInitialMedicines = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/medicines");
+        if (!response.ok) {
+          throw new Error("Failed to fetch medicines");
+        }
+        const data = await response.json();
+        setMedicines(data);
+      } catch (error) {
+        console.error("Error fetching medicines:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    fetchMedicines();
+    fetchInitialMedicines();
   }, []);
+
+  const handleSearchResults = (results: Medicine[]) => {
+    setMedicines(results);
+  };
 
   if (isLoading) {
     return <Loading />;
@@ -29,11 +43,18 @@ export default function Catalogue() {
       <h1 className="text-2xl font-semibold text-black mb-6">
         Available Medicines
       </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {medicines.map((medicine) => (
-          <MedicineCard key={medicine.id} medicine={medicine} />
-        ))}
+      <div className="mb-6">
+        <SearchBar onSearchResults={handleSearchResults} />
       </div>
+      {medicines.length === 0 ? (
+        <p className="text-center text-gray-500">No medicines found.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {medicines.map((medicine) => (
+            <MedicineCard key={medicine.id} medicine={medicine} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
