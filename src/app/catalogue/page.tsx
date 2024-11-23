@@ -3,19 +3,26 @@
 import { useState, useEffect } from "react";
 import { MedicineCard } from "@/components/MedicineCard";
 import { Medicine } from "@prisma/client";
+import Loading from "@/components/Loading";
 
 export default function Catalogue() {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchMedicines = async () => {
       const response = await fetch("/api/medicines");
       const data = await response.json();
       setMedicines(data);
+      setIsLoading(false);
     };
 
     fetchMedicines();
   }, []);
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

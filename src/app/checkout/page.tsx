@@ -13,6 +13,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import Loading from "@/components/Loading";
 
 interface CartItem {
   id: number;
@@ -27,6 +28,7 @@ interface CartItem {
 export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -34,10 +36,15 @@ export default function CheckoutPage() {
       const response = await fetch("/api/cart");
       const data = await response.json();
       setCart(data);
+      setIsLoading(false);
     };
 
     fetchCart();
   }, []);
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   const total = cart.reduce(
     (sum, item) => sum + item.medicine.price * item.quantity,
