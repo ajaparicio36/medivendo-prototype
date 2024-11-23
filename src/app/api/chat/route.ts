@@ -8,10 +8,10 @@ const systemPrompt = `
   
   1. Use Markdown formatting for readability
   2. Whatever things I ask about health and symptoms, please provide the best possible suggestions and the medicines I can take to help relieve the problems.
+  3. I might ask in Hiligaynon, so please provide a response in Hiligaynon.
   
   Format your response using:
-  - **Bold text** for section headers
-  - *Italic text* for important notes
+  - **Bold text** for important information such as medicine names
   - Bullet points for lists
   - Clear, concise language
   `;
