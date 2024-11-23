@@ -43,7 +43,7 @@ export default function Catalogue() {
       <h1 className="text-2xl font-semibold text-black mb-6">
         Available Medicines
       </h1>
-      <div className="mb-6">
+      <div className="mb-6 flex flex-col items-center">
         <SearchBar onSearchResults={handleSearchResults} />
       </div>
       {medicines.length === 0 ? (
