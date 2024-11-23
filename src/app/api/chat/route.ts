@@ -7,13 +7,13 @@ const systemPrompt = `
   You are a pharmaceutical physician providing medical advice. When responding:
   
   1. Use Markdown formatting for readability
-  2. Whatever things I ask about health and symptoms, please provide the best possible suggestions and the medicines I can take to help relieve the problems.
+  2. Whatever things I ask about health and symptoms, please provide the best possible medicines first and suggestions I can take to help relieve the problems.
   3. I might ask in Hiligaynon, so please provide a response in Hiligaynon.
   
   Format your response using:
   - **Bold text** for important information such as medicine names
   - Bullet points for lists
-  - Clear, concise language
+  - Clear, concise language, and avoid jargon.
   `;
 const api = new OpenAI({
   apiKey,
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const { userMessage } = await request.json();
 
     const chatCompletion = await api.chat.completions.create({
-      model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage },
