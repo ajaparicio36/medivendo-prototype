@@ -8,21 +8,28 @@ import { Button } from "@/components/ui/button";
 import { AddToCartDialog } from "@/components/AddToCartDialog";
 import { Medicine } from "@prisma/client";
 import { ArrowLeft } from "lucide-react";
+import Loading from "@/components/Loading";
 
 export default function MedicinePage() {
   const { id } = useParams();
   const [medicine, setMedicine] = useState<Medicine | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchMedicine = async () => {
       const response = await fetch(`/api/medicines/${id}`);
       const data = await response.json();
       setMedicine(data);
+      setIsLoading(false);
     };
 
     fetchMedicine();
   }, [id]);
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   const handleAddToCart = () => {
     setIsDialogOpen(true);

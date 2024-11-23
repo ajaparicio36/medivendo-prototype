@@ -159,7 +159,9 @@ export default function ChatPage() {
                   <AvatarFallback>MB</AvatarFallback>
                 </Avatar>
                 <div className="p-3 rounded-lg bg-[#dedcff] text-black">
-                  <ReactMarkdown>{typingContent}</ReactMarkdown>
+                  <ReactMarkdown>
+                    {typingContent === "" ? "Thinking..." : typingContent}
+                  </ReactMarkdown>
                 </div>
               </div>
             )}
